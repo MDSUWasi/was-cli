@@ -3,6 +3,7 @@ import json
 import time
 import shutil
 import subprocess
+import fcntl  # Added for file locking
 from collections import Counter
 from extractor import extract_document_text
 from differ import generate_delta, format_delta_summary
@@ -10,6 +11,23 @@ from differ import generate_delta, format_delta_summary
 WAS_DIR = ".was"
 HISTORY_FILE = os.path.join(WAS_DIR, "history.json")
 VERSIONS_DIR = os.path.join(WAS_DIR, "versions")
+
+# --- SECURITY HELPER ---
+def validate_path(filepath):
+    """
+    Validates that the path does not attempt to escape the current working directory.
+    Raises ValueError if path traversal is detected.
+    """
+    abs_path = os.path.abspath(filepath)
+    cwd = os.getcwd()
+    
+    # Normalize paths to remove any '..' segments safely
+    normalized_cwd = os.path.normpath(cwd)
+    normalized_abs = os.path.normpath(abs_path)
+    
+    if not normalized_abs.startswith(normalized_cwd + os.sep) and normalized_abs != normalized_cwd:
+        raise ValueError(f"Security violation: Path '{filepath}' attempts to access outside the workspace.")
+    return normalized_abs
 
 def send_notification(title, message):
     """
@@ -49,21 +67,72 @@ def init_repository():
     return True, "Initialized empty 'Was' repository successfully."
 
 def load_db():
-    """Safely loads the repository history database."""
+    """
+    Safely loads the repository history database with JSON integrity check and locking.
+    """
     if not os.path.exists(HISTORY_FILE):
         raise RuntimeError("No 'Was' repository found. Initialize one with 'was init' first.")
-    with open(HISTORY_FILE, 'r', encoding='utf-8') as f:
-        return json.load(f)
+    
+    # Use a file lock to prevent concurrent read/write issues
+    lock_file = HISTORY_FILE + '.lock'
+    
+    try:
+        # Create lock file if it doesn't exist
+        if not os.path.exists(lock_file):
+            open(lock_file, 'a').close()
+            
+        fd = os.open(lock_file, os.O_RDONLY)
+        try:
+            fcntl.flock(fd, fcntl.LOCK_SH) # Shared lock for reading
+            
+            try:
+                with open(HISTORY_FILE, 'r', encoding='utf-8') as f:
+                    content = f.read()
+                    data = json.loads(content)
+                    return data
+            except json.JSONDecodeError as e:
+                raise RuntimeError(f"Database corrupted (Invalid JSON): {e}")
+            except Exception as e:
+                raise RuntimeError(f"Error reading database: {e}")
+        finally:
+            fcntl.flock(fd, fcntl.LOCK_UN)
+            os.close(fd)
+    except FileNotFoundError:
+        # If lock file creation fails but history exists, proceed without lock (fallback)
+        with open(HISTORY_FILE, 'r', encoding='utf-8') as f:
+            return json.load(f)
 
 def save_db(db):
-    """Saves updates back to the repository history database."""
-    with open(HISTORY_FILE, 'w', encoding='utf-8') as f:
-        json.dump(db, f, indent=4)
+    """
+    Saves updates back to the repository history database with exclusive locking.
+    """
+    lock_file = HISTORY_FILE + '.lock'
+    
+    # Ensure lock file exists
+    if not os.path.exists(lock_file):
+        open(lock_file, 'a').close()
+        
+    fd = os.open(lock_file, os.O_RDWR)
+    try:
+        fcntl.flock(fd, fcntl.LOCK_EX) # Exclusive lock for writing
+        
+        # Write to temp file first to avoid corruption on crash
+        temp_file = HISTORY_FILE + '.tmp'
+        with open(temp_file, 'w', encoding='utf-8') as f:
+            json.dump(db, f, indent=4)
+        
+        # Atomic move
+        shutil.move(temp_file, HISTORY_FILE)
+        
+    finally:
+        fcntl.flock(fd, fcntl.LOCK_UN)
+        os.close(fd)
 
 def resolve_version(db, filepath, version_or_tag):
     """
     Checks if the requested key is a custom milestone tag.
     If so, returns the associated version ID; otherwise, returns the input directly.
+    Includes safety check for tag mismatch.
     """
     normalized_path = os.path.relpath(filepath)
     
@@ -71,7 +140,9 @@ def resolve_version(db, filepath, version_or_tag):
         tag_data = db["tags"][version_or_tag]
         if tag_data["filepath"] == normalized_path:
             return tag_data["version_id"]
-            
+        # If tag exists but points to different file, we ignore it and treat as literal version ID
+        # This prevents accidental cross-file checkout
+    
     return version_or_tag
 
 def save_commit(filepath, message, reason="", is_auto=False):
@@ -79,15 +150,18 @@ def save_commit(filepath, message, reason="", is_auto=False):
     Saves a new snapshot of the active file. If it is the first time tracking,
     it saves a baseline. Otherwise, it calculates changes and stores the new file version.
     """
-    if not os.path.exists(filepath):
-        return False, f"File {filepath} does not exist."
+    # Security Check
+    abs_filepath = validate_path(filepath)
+    
+    if not os.path.exists(abs_filepath):
+        return False, f"File {abs_filepath} does not exist."
         
     db = load_db()
-    filename = os.path.basename(filepath)
-    normalized_path = os.path.relpath(filepath)
+    filename = os.path.basename(abs_filepath)
+    normalized_path = os.path.relpath(abs_filepath)
     
     try:
-        current_lines = extract_document_text(filepath)
+        current_lines = extract_document_text(abs_filepath)
     except Exception as e:
         return False, f"Error reading document text: {str(e)}"
         
@@ -97,7 +171,7 @@ def save_commit(filepath, message, reason="", is_auto=False):
     
     # 1. Handle Initial Baseline Setup
     if normalized_path not in db['tracked_files']:
-        shutil.copy2(filepath, snapshot_dest)
+        shutil.copy2(abs_filepath, snapshot_dest)
         db['tracked_files'][normalized_path] = {"current_version": commit_id}
         
         commit_entry = {
@@ -119,7 +193,16 @@ def save_commit(filepath, message, reason="", is_auto=False):
         
     # 2. Check for modifications against the latest saved version
     last_version_id = db['tracked_files'][normalized_path]["current_version"]
-    last_commit = next(c for c in reversed(db['commits']) if c['filepath'] == normalized_path and c['id'] == last_version_id)
+    # Robust lookup for last commit
+    matching_commits = [c for c in db['commits'] if c['filepath'] == normalized_path and c['id'] == last_version_id]
+    if not matching_commits:
+        # Fallback if data inconsistency occurs
+        last_commit = next((c for c in reversed(db['commits']) if c['filepath'] == normalized_path), None)
+        if not last_commit:
+             return False, "Could not find previous version record."
+    else:
+        last_commit = matching_commits[-1] # Take the most recent match if duplicates somehow exist
+        
     last_file_path = os.path.join(VERSIONS_DIR, last_commit['snapshot_file'])
     last_lines = extract_document_text(last_file_path)
     
@@ -128,7 +211,7 @@ def save_commit(filepath, message, reason="", is_auto=False):
         
     # Calculate difference and write the commit entry
     delta = generate_delta(last_lines, current_lines)
-    shutil.copy2(filepath, snapshot_dest)
+    shutil.copy2(abs_filepath, snapshot_dest)
     
     commit_entry = {
         "id": commit_id,
@@ -151,9 +234,11 @@ def save_commit(filepath, message, reason="", is_auto=False):
 
 def checkout_file(filepath, version_or_tag):
     """Restores the workspace file to a specific historical checkpoint or tag."""
+    abs_filepath = validate_path(filepath)
+    normalized_path = os.path.relpath(abs_filepath)
+    
     db = load_db()
-    normalized_path = os.path.relpath(filepath)
-    version_id = resolve_version(db, filepath, version_or_tag)
+    version_id = resolve_version(db, abs_filepath, version_or_tag)
     
     target_commit = next((c for c in db['commits'] if c['filepath'] == normalized_path and c['id'] == version_id), None)
     if not target_commit:
@@ -161,9 +246,9 @@ def checkout_file(filepath, version_or_tag):
         
     snapshot_path = os.path.join(VERSIONS_DIR, target_commit['snapshot_file'])
     
-    if os.path.exists(filepath):
-        os.remove(filepath)
-    shutil.copy2(snapshot_path, filepath)
+    if os.path.exists(abs_filepath):
+        os.remove(abs_filepath)
+    shutil.copy2(snapshot_path, abs_filepath)
     
     db['tracked_files'][normalized_path]["current_version"] = version_id
     save_db(db)
@@ -173,27 +258,45 @@ def get_history_log(filepath=None):
     db = load_db()
     commits = db['commits']
     if filepath:
-        normalized_path = os.path.relpath(filepath)
+        try:
+            normalized_path = os.path.relpath(validate_path(filepath))
+        except ValueError:
+            return [] # Return empty list for invalid paths
         commits = [c for c in commits if c['filepath'] == normalized_path]
     return commits
 
 def get_status(filepath):
     """Checks whether the workspace file contains unsaved changes."""
+    try:
+        abs_filepath = validate_path(filepath)
+    except ValueError:
+        return "invalid_path", 0, 0
+
     db = load_db()
-    normalized_path = os.path.relpath(filepath)
+    normalized_path = os.path.relpath(abs_filepath)
     
     if normalized_path not in db['tracked_files']:
         return "untracked", 0, 0
         
-    if not os.path.exists(filepath):
+    if not os.path.exists(abs_filepath):
         return "missing", 0, 0
         
     last_version_id = db['tracked_files'][normalized_path]["current_version"]
-    last_commit = next(c for c in reversed(db['commits']) if c['filepath'] == normalized_path and c['id'] == last_version_id)
+    # Safe lookup
+    matching = [c for c in db['commits'] if c['filepath'] == normalized_path and c['id'] == last_version_id]
+    if not matching:
+        # Fallback to last known commit for this file if version ID mismatch
+        matching = [c for c in db['commits'] if c['filepath'] == normalized_path]
+        if not matching:
+            return "missing", 0, 0
+        last_commit = sorted(matching, key=lambda x: x['timestamp'], reverse=True)[0]
+    else:
+        last_commit = matching[0]
+        
     last_file_path = os.path.join(VERSIONS_DIR, last_commit['snapshot_file'])
     
     last_lines = extract_document_text(last_file_path)
-    current_lines = extract_document_text(filepath)
+    current_lines = extract_document_text(abs_filepath)
     
     if last_lines == current_lines:
         return "unmodified", 0, 0
@@ -204,25 +307,34 @@ def get_status(filepath):
 
 def get_current_diff(filepath):
     """Calculates active differences between disk file and repository."""
+    abs_filepath = validate_path(filepath)
     db = load_db()
-    normalized_path = os.path.relpath(filepath)
+    normalized_path = os.path.relpath(abs_filepath)
     
     if normalized_path not in db['tracked_files']:
         raise ValueError(f"File '{filepath}' is not tracked yet. Run 'was save' to start.")
         
     last_version_id = db['tracked_files'][normalized_path]["current_version"]
-    last_commit = next(c for c in reversed(db['commits']) if c['filepath'] == normalized_path and c['id'] == last_version_id)
+    matching = [c for c in db['commits'] if c['filepath'] == normalized_path and c['id'] == last_version_id]
+    if not matching:
+         matching = [c for c in db['commits'] if c['filepath'] == normalized_path]
+         if not matching: raise ValueError("No valid version found")
+         last_commit = sorted(matching, key=lambda x: x['timestamp'], reverse=True)[0]
+    else:
+        last_commit = matching[0]
+        
     last_file_path = os.path.join(VERSIONS_DIR, last_commit['snapshot_file'])
     
     last_lines = extract_document_text(last_file_path)
-    current_lines = extract_document_text(filepath)
+    current_lines = extract_document_text(abs_filepath)
     
     return generate_delta(last_lines, current_lines)
 
 def tag_version(filepath, target_version_id, tag_name):
     """Assigns a friendly nickname to an existing version number."""
+    abs_filepath = validate_path(filepath)
     db = load_db()
-    normalized_path = os.path.relpath(filepath)
+    normalized_path = os.path.relpath(abs_filepath)
     
     target_commit = next((c for c in db['commits'] if c['filepath'] == normalized_path and c['id'] == target_version_id), None)
     if not target_commit:
@@ -240,8 +352,9 @@ def tag_version(filepath, target_version_id, tag_name):
 
 def get_statistics(filepath):
     """Aggregates study-habits and document growth analytics."""
+    abs_filepath = validate_path(filepath)
     db = load_db()
-    normalized_path = os.path.relpath(filepath)
+    normalized_path = os.path.relpath(abs_filepath)
     
     file_commits = [c for c in db['commits'] if c['filepath'] == normalized_path]
     if not file_commits:
@@ -253,6 +366,11 @@ def get_statistics(filepath):
     days = []
     for c in file_commits:
         days.append(time.strftime('%A', time.localtime(c['timestamp'])))
+    
+    # Safety check if days list is empty (shouldn't happen given file_commits check)
+    if not days:
+        return None
+        
     most_common_day, count = Counter(days).most_common(1)[0]
     
     # Analyze line progression
@@ -274,14 +392,15 @@ def get_statistics(filepath):
 
 def rollback_file(filepath):
     """Discards active workspace modifications to match the latest commit state."""
+    abs_filepath = validate_path(filepath)
     db = load_db()
-    normalized_path = os.path.relpath(filepath)
+    normalized_path = os.path.relpath(abs_filepath)
     
     if normalized_path not in db['tracked_files']:
         raise ValueError("File is not tracked yet. Nothing to roll back to.")
         
     last_version_id = db['tracked_files'][normalized_path]["current_version"]
-    checkout_file(filepath, last_version_id)
+    checkout_file(abs_filepath, last_version_id)
 
 def search_history(query_term):
     """Searches through historical contents for a term and lists exact matches."""
@@ -291,41 +410,55 @@ def search_history(query_term):
     for commit in db['commits']:
         snapshot_path = os.path.join(VERSIONS_DIR, commit['snapshot_file'])
         if os.path.exists(snapshot_path):
-            lines = extract_document_text(snapshot_path)
-            matching_lines = [i + 1 for i, line in enumerate(lines) if query_term.lower() in line.lower()]
-            if matching_lines:
-                results.append({
-                    "commit_id": commit['id'],
-                    "filepath": commit['filepath'],
-                    "message": commit['message'],
-                    "timestamp": commit['timestamp'],
-                    "lines": matching_lines
-                })
+            try:
+                lines = extract_document_text(snapshot_path)
+                matching_lines = [i + 1 for i, line in enumerate(lines) if query_term.lower() in line.lower()]
+                if matching_lines:
+                    results.append({
+                        "commit_id": commit['id'],
+                        "filepath": commit['filepath'],
+                        "message": commit['message'],
+                        "timestamp": commit['timestamp'],
+                        "lines": matching_lines
+                    })
+            except Exception:
+                # Skip corrupted snapshot files silently
+                continue
     return results
 
 def export_file(filepath, version_or_tag, dest_filepath):
     """Extracts a historical copy to a new location without altering active workspace."""
+    abs_filepath = validate_path(filepath)
+    # Validate destination too
+    abs_dest = validate_path(dest_filepath)
+    
     db = load_db()
-    normalized_path = os.path.relpath(filepath)
-    version_id = resolve_version(db, filepath, version_or_tag)
+    normalized_path = os.path.relpath(abs_filepath)
+    version_id = resolve_version(db, abs_filepath, version_or_tag)
     
     target_commit = next((c for c in db['commits'] if c['filepath'] == normalized_path and c['id'] == version_id), None)
     if not target_commit:
         raise ValueError(f"Version or tag '{version_or_tag}' not found for file {filepath}")
         
     snapshot_path = os.path.join(VERSIONS_DIR, target_commit['snapshot_file'])
-    shutil.copy2(snapshot_path, dest_filepath)
+    shutil.copy2(snapshot_path, abs_dest)
 
 def purge_history(filepath):
     """Deletes redundant intermediate background auto-saves to reclaim disk space."""
+    abs_filepath = validate_path(filepath)
     db = load_db()
-    normalized_path = os.path.relpath(filepath)
+    normalized_path = os.path.relpath(abs_filepath)
     
-    tagged_versions = {tag_data["version_id"] for tag_data in db.get("tags", {}).values() if tag_data["filepath"] == normalized_path}
+    # Collect tagged versions first
+    tagged_versions = set()
+    for tag_data in db.get("tags", {}).values():
+        if tag_data["filepath"] == normalized_path:
+            tagged_versions.add(tag_data["version_id"])
     
     purged_count = 0
     remaining_commits = []
     
+    # Build new list of commits safely (Filter First, Then Assign)
     for commit in db['commits']:
         if commit['filepath'] != normalized_path:
             remaining_commits.append(commit)
@@ -333,7 +466,17 @@ def purge_history(filepath):
             
         # Keep baselines and manually tagged milestone versions
         is_auto = "Auto-save" in commit['message']
-        if is_auto and not commit['is_baseline'] and (commit['id'] not in tagged_versions):
+        
+        should_keep = False
+        if commit['is_baseline']:
+            should_keep = True
+        elif commit['id'] in tagged_versions:
+            should_keep = True
+        elif not is_auto:
+            should_keep = True
+            
+        if not should_keep:
+            # Delete the snapshot file
             snapshot_path = os.path.join(VERSIONS_DIR, commit['snapshot_file'])
             if os.path.exists(snapshot_path):
                 os.remove(snapshot_path)
@@ -345,6 +488,7 @@ def purge_history(filepath):
         db['commits'] = remaining_commits
         file_commits = [c for c in remaining_commits if c['filepath'] == normalized_path]
         if file_commits:
+            # Ensure we point to the latest valid commit after purge
             db['tracked_files'][normalized_path]["current_version"] = file_commits[-1]["id"]
         save_db(db)
         
