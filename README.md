@@ -43,6 +43,7 @@ WAS tracks changes to your documents automatically, allowing you to view history
 ### Step 1: Clone or Download Project Files
 
 Make sure these files are in the same directory:
+
 project_folder/
 ├── main.py
 ├── extractor.py
@@ -56,14 +57,19 @@ Make Executable: chmod +x main.pyStep
 ### Step 3: 
 Create Shell Alias (Optional but Recommended): Add to your ~/.bashrc or ~/.zshrc:
 
-# Add WAS CLI to PATH
-alias was="python3 /path/to/your/project/main.py" Then reload your shell configuration:source ~/.bashrc    
-# For Bash
-# OR
-source ~/.zshrc     
-# For ZshNow you can use was from anywhere in the terminal!
+## Add WAS CLI to PATH
 
-## 🚀 Quick Start Guide1. 
+alias was = "python3 /path/to/your/project/main.py" 
+
+Then reload your shell configuration:source ~/.bashrc  (For Bash)
+
+*OR*
+
+source ~/.zshrc    (For zsh)
+
+*Now you can use was from anywhere in the terminal!*
+
+# 🚀 Quick Start Guide1. 
 ### Initialize a Repositorycd ~/school_notes
 1. *was init* This creates a hidden .was/ directory to store all version data.
 2. Start Tracking a Filewas save chemistry_notes.docx "Created initial alkanes section" "Base homework prep"First save creates a baseline. Subsequent saves only commit if changes are detected.
@@ -125,8 +131,10 @@ was purge <file>
 Clean up automatic background saves to free disk space. Keeps baselines and manually tagged versions.
 was purge organic_chemistry.docx
 
-📂 Directory Structure
+## 📂 Directory Structure
+
 After initialization (was init):
+```
 your_project_folder/
 │
 ├── main.py              # CLI interface
@@ -141,71 +149,93 @@ your_project_folder/
         ├── v1_filename.ext
         ├── v2_filename.ext
         └── ...
+```
 
-
-🔧 Example Workflows
+# 🔧 Example Workflows
 Workflow 1: Study Note Management
-# 1. Setup
+## 1. Setup
 cd ~/school_notes
+
 was init
 
-# 2. Start first note
+## 2. Start first note
 was save chemistry.docx "Started alkane basics" "Homework Week 1"
 
-# 3. Enable auto-protection
+## 3. Enable auto-protection
 was watch chemistry.docx
-# Now edit in your preferred editor; Was auto-saves every change
+## Now edit in your preferred editor; Was auto-saves every change
 
-# 4. Review progress later
+## 4. Review progress later
 was status chemistry.docx
+
 was log chemistry.docx
 
-# 5. Mark milestone before exam
+## 5. Mark milestone before exam
 was tag chemistry.docx v5 "exam-ready"
+
 Workflow 2: Recover Lost Work
-# Accidentally deleted content?
+## Accidentally deleted content?
 was diff notes.docx                    # See what changed
+
 was checkout notes.docx v3             # Restore to earlier version
-Workflow 3: Find Old References
-# Need to find where you wrote something months ago?
+
+# Workflow 3: Find Old References
+## Need to find where you wrote something months ago?
 was search "photosynthesis"            # Returns all matching versions
 
-🔒 Security & Privacy
+# 🔒 Security & Privacy
 
 ✅ Local-only operation — No network calls, everything stays on your machine
+
 ✅ Path traversal protection — Prevents access outside workspace directory
+
 ✅ Database locking — Prevents corruption during concurrent operations
+
 ✅ Atomic writes — Uses temp file + move to prevent partial saves
+
 ⚠️ No encryption — Snapshots stored as plain text (add GPG wrapper if needed)
 
 
-🛠️ Troubleshooting
+# 🛠️ Troubleshooting
 ProblemSolutionNo 'Was' repository foundRun was init firstFile is untracked by WasRun was save <file> to start trackingDatabase corrupted errorRestore from backup or reinitializeNotification errorsInstall notify-send or ignore (graceful fallback)Alias not workingRun source ~/.bashrc after adding to config
 
-📋 Requirements
+# 📋 Requirements
 
 Python 3.6+
+
 Standard library only (no external dependencies)
+
 Linux/macOS (Windows requires WSL or Git Bash for some features)
+
 notify-send optional (for desktop notifications)
 
 
-🎯 Future Enhancements
+# 🎯 Future Enhancements
 
+ 
  Encrypted snapshot storage
+ 
  Database checksum verification
+ 
  --dry-run flag for purge command
+ 
  Tag listing command (was tag --list)
+ 
  Comparison between two historical versions
+ 
  Automatic cloud backup integration (optional)
 
 
-📄 License
-Free to use, modify, and distribute. Built with ❤️ for students and writers who need reliable document versioning.
+# 📄 License
+This Project is under MIT License. Free to use, modify, and distribute. Built with ❤️ for students and writers who need reliable document versioning.
 
-👤 Credits
-Built from collaborative brainstorming sessions. Inspired by Git but simplified for personal document management workflows.
+# 👤 Credits
+Inspired by Git but simplified for personal document management workflows.
 
 "Your words deserve a time machine."
 
 ---
+
+
+This project including this README are currently under development. The README above is a draft only. So, It is requested to everyone, do not touch this project for now. 
+

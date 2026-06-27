@@ -1,3 +1,10 @@
+"""
+PATCHER MODULE - Available for future optimization when storing deltas-only.
+Currently unused as WAS stores full snapshots for simplicity and reliability.
+To activate: Modify history.py to apply delta during checkout instead of copying full files.
+"""
+
+
 def apply_delta(base_lines, delta_lines):
     """
     Applies a unified diff patch (delta_lines) to a list of base text lines (base_lines).
@@ -7,7 +14,7 @@ def apply_delta(base_lines, delta_lines):
     and variable header formats.
     """
     if not delta_lines:
-        return base_lines[:] # Return a copy to avoid mutating input
+        return base_lines[:]  # Return a copy to avoid mutating input
 
     result = []
     delta_iter = iter(delta_lines)

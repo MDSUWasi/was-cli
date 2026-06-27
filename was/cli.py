@@ -2,18 +2,19 @@
 import sys
 import os
 import time
-from history import (
+from .history import (
     init_repository, save_commit, get_history_log, load_db, checkout_file,
     get_status, get_current_diff, tag_version, get_statistics, rollback_file,
     search_history, export_file, purge_history
 )
-from differ import print_colored_diff
+from .differ import print_colored_diff
+
 
 def print_help():
     """Prints a beautiful, easy-to-read help menu in the terminal."""
     print("""
 ======================================================
-  WAS - Your Document Time Machine CLI (v1.3.0)
+  WAS - Your Document Time Machine CLI (v1.4.0)
 ======================================================
 Usage: was <command> [arguments]
 
@@ -22,7 +23,7 @@ Core Commands:
   save <file> "<msg>" ["<why>"]  Commit changes manually to the timeline.
   log [<file>]                   View history log of all commits.
   checkout <file> <ver/tag>      Restore a document to a previous state.
-  watch <file>                   Launch background engine to auto-save updates.
+  watch <file>                   Launch foreground monitoring to auto-save updates.
 
 Extended Power Commands:
   status <file>                  Show if file changed compared to last save.
@@ -35,9 +36,11 @@ Extended Power Commands:
   purge <file>                   Clean up automatic background saves to free disk space.
     """)
 
+
 def handle_init():
     success, message = init_repository()
     print(message)
+
 
 def handle_save():
     if len(sys.argv) < 4:
@@ -48,6 +51,7 @@ def handle_save():
     reason = sys.argv[4] if len(sys.argv) > 4 else ""
     success, msg = save_commit(filepath, message, reason)
     print(msg)
+
 
 def handle_log():
     filepath = sys.argv[2] if len(sys.argv) > 2 else None
@@ -63,8 +67,8 @@ def handle_log():
         print("\n=== TIMELINE LOG ===")
         for c in reversed(commits):
             dt = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(c['timestamp']))
-            # Identify any tags attached to this specific commit
-            associated_tags = [name for name, t in tags_map.items() if t["filepath"] == c["filepath"] and t["version_id"] == c["id"]]
+            associated_tags = [name for name, t in tags_map.items() 
+                             if t["filepath"] == c["filepath"] and t["version_id"] == c['id']]
             tag_str = f" [\033[93mTags: {', '.join(associated_tags)}\033[0m]" if associated_tags else ""
             
             print(f"\nCommit ID: \033[94m{c['id']}\033[0m{tag_str}")
@@ -76,6 +80,7 @@ def handle_log():
             print("-" * 40)
     except Exception as e:
         print(f"Error reading history: {e}")
+
 
 def handle_checkout():
     if len(sys.argv) < 4:
@@ -89,6 +94,7 @@ def handle_checkout():
     except Exception as e:
         print(f"Failed to travel back: {e}")
 
+
 def handle_watch():
     if len(sys.argv) < 3:
         print("Error: Specify a target file to watch.")
@@ -99,29 +105,29 @@ def handle_watch():
         return
         
     print(f"👁️  Was is watching '{filepath}'... Press Ctrl+C to stop.")
-    # Establish baseline tracking right away if not already tracked
     save_commit(filepath, "Initial baseline via Watch mode", "Auto-start monitoring")
     
     last_mtime = os.path.getmtime(filepath)
     try:
         while True:
-            time.sleep(2)  # Check the file system every 2 seconds
+            time.sleep(2)
             if os.path.exists(filepath):
                 current_mtime = os.path.getmtime(filepath)
                 if current_mtime != last_mtime:
                     last_mtime = current_mtime
                     timestamp_str = time.strftime('%Y-%m-%d %H:%M:%S')
                     print(f"Modification detected at {timestamp_str}. Processing change...")
-                    time.sleep(0.5)  # Brief pause to allow editor to release file lock
+                    time.sleep(0.5)
                     success, msg = save_commit(
                         filepath=filepath, 
-                        message=f"Auto-save snapshot", 
+                        message="Auto-save snapshot", 
                         reason=f"Modified at {timestamp_str}",
                         is_auto=True
                     )
                     print(msg)
     except KeyboardInterrupt:
         print("\nStopping Watcher mode. Your time machine remains active and healthy.")
+
 
 def handle_status():
     if len(sys.argv) < 3:
@@ -134,12 +140,17 @@ def handle_status():
             print(f"🔴 File '{filepath}' is \033[91muntracked\033[0m by Was.")
         elif status == "missing":
             print(f"⚠️ Tracked file '{filepath}' is \033[31mmissing from workspace\033[0m.")
+        elif status == "corrupted_snapshot":
+            print(f"⚠️ Tracked file '{filepath}' has a \033[31mcorrupted or missing snapshot\033[0m.")
+        elif status == "read_error":
+            print(f"⚠️ Error reading file '{filepath}'. Check file accessibility.")
         elif status == "unmodified":
             print(f"🟢 File '{filepath}' has \033[92mno unsaved changes\033[0m.")
         elif status == "modified":
             print(f"🟡 File '{filepath}' is \033[93mModified\033[0m (Unsaved: +{ins} insertions, -{dels} deletions).")
     except Exception as e:
         print(f"Error checking status: {e}")
+
 
 def handle_diff():
     if len(sys.argv) < 3:
@@ -151,6 +162,7 @@ def handle_diff():
         print_colored_diff(delta)
     except Exception as e:
         print(f"Error executing diff: {e}")
+
 
 def handle_tag():
     if len(sys.argv) < 5:
@@ -164,6 +176,7 @@ def handle_tag():
         print(msg)
     except Exception as e:
         print(f"Failed to tag: {e}")
+
 
 def handle_stats():
     if len(sys.argv) < 3:
@@ -184,6 +197,7 @@ def handle_stats():
     except Exception as e:
         print(f"Error calculating stats: {e}")
 
+
 def handle_rollback():
     if len(sys.argv) < 3:
         print("Error: Usage: was rollback <file>")
@@ -194,6 +208,7 @@ def handle_rollback():
         print(f"\033[92mSuccess!\033[0m Discarded all active unsaved edits for '{filepath}'.")
     except Exception as e:
         print(f"Rollback failed: {e}")
+
 
 def handle_search():
     if len(sys.argv) < 3:
@@ -214,6 +229,7 @@ def handle_search():
     except Exception as e:
         print(f"Search failed: {e}")
 
+
 def handle_export():
     if len(sys.argv) < 5:
         print("Error: Usage: was export <file> <ver/tag> <destination>")
@@ -227,6 +243,7 @@ def handle_export():
     except Exception as e:
         print(f"Export failed: {e}")
 
+
 def handle_purge():
     if len(sys.argv) < 3:
         print("Error: Usage: was purge <file>")
@@ -237,6 +254,7 @@ def handle_purge():
         print(f"\033[92mPurge Complete!\033[0m Deleted {count} intermediate auto-save caches.")
     except Exception as e:
         print(f"Purge failed: {e}")
+
 
 def main():
     if len(sys.argv) < 2:
@@ -273,6 +291,7 @@ def main():
         handle_purge()
     else:
         print_help()
+
 
 if __name__ == "__main__":
     main()

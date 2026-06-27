@@ -1,5 +1,6 @@
 import difflib
 
+
 def generate_delta(old_lines, new_lines):
     """
     Compares two lists of text lines and returns a list representing the 
@@ -15,6 +16,7 @@ def generate_delta(old_lines, new_lines):
         tofile='modified', 
         lineterm=''
     ))
+
 
 def format_delta_summary(delta_lines):
     """
@@ -37,6 +39,7 @@ def format_delta_summary(delta_lines):
         "insertions": added,
         "deletions": removed
     }
+
 
 def print_colored_diff(delta_lines):
     """
