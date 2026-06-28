@@ -5,31 +5,30 @@ Platform
 Download
 Track • Restore • Analyze your documents with simple terminal commands
 
-## 🌟 Table of Contents
-
-Quick Demo Videos
-What is WAS?
-Key Features
-Installation Guide
-Quick Start
-Command Reference
-How It Works
-Dependencies
-Directory Structure
-Use Cases & Workflows
-Security & Privacy
-Troubleshooting
-Future Roadmap
-Contributing
-License
-
-
 ## 🎬 Quick Demo Videos
-
 ### 📁 All demos available in the try/ folder
+**Installing was for first time (The demo is done on Linux Device running Debian)**
 
-StepVideoDurationDescription🔧 Installinstall_demo.mp4~2 minComplete installation pipeline with pip setup✨ Usageusage_walkthrough.mp4~5 minLive demonstration of core features (save, watch, diff, checkout)🗑️ Uninstalluninstall_demo.mp4~1 minClean removal including PATH restoration
-▶️ Watch Full Playlist on YouTube (coming soon)
+https://github.com/user-attachments/assets/63e26887-9df5-4025-aeb0-1cc87f8d92da
+
+**Checking whether WAS was successfully installed or not**
+
+https://github.com/user-attachments/assets/4be5777e-46f1-4717-97b0-0fef6fe56a25
+
+**Basic uses of WAS** 
+
+https://github.com/user-attachments/assets/441581e6-5f9f-4883-b65d-8dc59c89c12b
+
+
+**Uninstalling WAS**
+
+https://github.com/user-attachments/assets/c1b72e6d-ebde-4f12-aee8-26801a4f924c
+
+**Note:** I have used cd was-cli because was-cli folder is inside my root directory (Or main files). But users may need to add the accurate path according to the path where was-cli was saved
+
+**Note:** Uninstalling using "./uninstall.sh" will uninstall it from device but the source code will remain in a folder name "was-cli". To completely remove WAS, just delete the folder (was-cli) after using ./uninstall.sh
+
+## You can easily see all commands for WAS by typing ``` was --help ``` inside the terminal
 
 ## 🤔 What is WAS?
 WAS (Document Time Machine) is a lightweight, zero-dependency version control system built exclusively for personal document management. Inspired by Git but simplified for writers, students, researchers, and anyone who needs to track changes in their Word docs, notes, manuscripts, or code files.
@@ -121,8 +120,8 @@ use "apt for debian based destros and "dnf" for fedora based destros
 
 ### 2. Clone or download repository
 ```
-git clone https://github.com/YOUR_USERNAME/WAS-Doc-TimeMachine.git
-cd WAS-Doc-TimeMachine
+git clone https://github.com/MDSUWasi/was-cli.git
+cd was-cli
 ```
 
 ### 3. Run installer script
@@ -151,8 +150,8 @@ brew install python3
 
 ### 2. Clone repository
 ```
-git clone https://github.com/YOUR_USERNAME/WAS-Doc-TimeMachine.git
-cd WAS-Doc-TimeMachine
+git clone https://github.com/MDSUWasi/was-cli.git
+cd was-cli
 ```
 
 ### 3. Run installer
@@ -215,7 +214,7 @@ was init
 
 ### Option 1: Use provided uninstaller
 ```
-cd /path/to/WAS-Doc-TimeMachine
+cd /path/to/was-cli
 chmod +x uninstall.sh
 ```
 ```
