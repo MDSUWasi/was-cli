@@ -104,7 +104,8 @@ graph TD
 
 Copy and paste into your terminal:
 ```
-curl -fsSL https://raw.githubusercontent.com/MDSUWasi/was-cli/main/install.sh | bash
+git clone https://github.com/MDSUWasi/was-cli.git && cd was-cli && chmod +x install.sh && ./install.sh
+
 
 ```
 
