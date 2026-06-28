@@ -37,7 +37,9 @@ fi
 if [ -f "$RC_FILE" ] && grep -q '.local/bin' "$RC_FILE"; then
     read -p "Remove WAS PATH entry from $RC_FILE? [Y/n] " response
     if [[ ! "$response" =~ ^[Nn] ]]; then
-        sed -i '/\.local\/bin/d' "$RC_FILE"
+        # FIX: Only remove lines that export PATH with .local/bin,
+        # not every line that happens to mention .local/bin
+        sed -i '/export PATH=.*\.local\/bin/d' "$RC_FILE"
         echo -e "${GREEN}✓ PATH entry removed from $RC_FILE${NC}"
         echo -e "${YELLOW}Restart your terminal or run: source $RC_FILE${NC}"
     fi

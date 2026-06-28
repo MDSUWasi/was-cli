@@ -71,8 +71,8 @@ elif [ -x "$USER_BIN/was" ]; then
     # Auto-add to PATH (with confirmation)
     read -p "Automatically add to PATH? [Y/n] " response
     if [[ ! "$response" =~ ^[Nn] ]]; then
-        # Only append if not already present
-        if ! grep -q "export PATH=\"\$USER_BIN:\$PATH\"" "$RC_FILE"; then
+        # FIX: grep for the expanded $USER_BIN value, not the escaped literal
+        if ! grep -q "$USER_BIN" "$RC_FILE"; then
             echo "export PATH=\"$USER_BIN:\$PATH\"" >> "$RC_FILE"
         fi
         export PATH="$USER_BIN:$PATH"

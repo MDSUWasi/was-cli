@@ -6,8 +6,8 @@ def generate_delta(old_lines, new_lines):
     Compares two lists of text lines and returns a list representing the 
     unified differences (the delta patch) between them.
     
-    This is extremely efficient because we only save what changed, 
-    rather than duplicating your entire notes file!
+    Note: WAS currently stores full snapshots for reliability. The delta is
+    stored as metadata for diff display and analytics, not for reconstruction.
     """
     return list(difflib.unified_diff(
         old_lines, 
@@ -28,8 +28,6 @@ def format_delta_summary(delta_lines):
     added = 0
     removed = 0
     for line in delta_lines:
-        # Standard diffs use '+' for additions and '-' for deletions.
-        # We skip the standard file comparison headers (+++ and ---).
         if line.startswith('+') and not line.startswith('+++'):
             added += 1
         elif line.startswith('-') and not line.startswith('---'):
@@ -54,14 +52,10 @@ def print_colored_diff(delta_lines):
         
     for line in delta_lines:
         if line.startswith('+') and not line.startswith('+++'):
-            # Light Green for added text
             print(f"\033[92m{line}\033[0m")
         elif line.startswith('-') and not line.startswith('---'):
-            # Light Red for removed text
             print(f"\033[91m{line}\033[0m")
         elif line.startswith('@@'):
-            # Light Cyan for coordinate markers
             print(f"\033[96m{line}\033[0m")
         else:
-            # Normal text for context lines (with a space prefix)
             print(line)
