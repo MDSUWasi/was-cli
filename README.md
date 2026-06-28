@@ -104,7 +104,8 @@ graph TD
 
 Copy and paste into your terminal:
 ```
-curl https://raw.githubusercontent.com/YOUR_USERNAME/WAS-Doc-TimeMachine/main/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/MDSUWasi/was-cli/main/install.sh | bash
+
 ```
 
 ## 🖥️ Platform-Specific Instructions
