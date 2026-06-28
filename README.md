@@ -1,8 +1,8 @@
 # 🕰️ WAS — Your Document Time Machine CLI
 A powerful version control system designed specifically for personal documents and study notes.Python
-License
-Platform
-Download
+
+![License](https://img.shields.io/badge/license-MIT-blue.svg)
+
 Track • Restore • Analyze your documents with simple terminal commands
 
 ## 🎬 Quick Demo Videos
@@ -743,10 +743,11 @@ Inspired by Git but stripped down for personal workflows where simplicity beats 
 "Your words deserve a time machine."
 
 
-📞 Get Help
-
+## 📞 Get Help
 Documentation: Read this README thoroughly
+
 Issues: GitHub Issues
+
 Discussions: GitHub Discussions
 
 
