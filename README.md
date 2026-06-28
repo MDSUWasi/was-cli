@@ -1,5 +1,5 @@
 # 🕰️ WAS — Your Document Time Machine CLI
-A powerful version control system designed specifically for personal documents and study notes.Python
+A powerful version control system designed specifically for personal documents and study notes.
 
 ![License](https://img.shields.io/badge/license-MIT-blue.svg)
 
