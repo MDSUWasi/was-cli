@@ -1,73 +1,54 @@
-import os
-import zipfile
+import os, zipfile
 import xml.etree.ElementTree as ET
-
 
 NAMESPACES = {
     'w': 'http://schemas.openxmlformats.org/wordprocessingml/2006/main',
-    'office': 'urn:oasis:names:tc:opendocument:xmlns:office:1.0',
     'text': 'urn:oasis:names:tc:opendocument:xmlns:text:1.0'
 }
 
-
-def read_text_file(filepath):
-    """Safely reads a plain text file line by line."""
-    with open(filepath, 'r', encoding='utf-8', errors='ignore') as f:
+def _read_txt(fp):
+    """Plain text file reader."""
+    with open(fp, 'r', encoding='utf-8', errors='ignore') as f:
         content = f.read()
-        # Split on newlines, preserving empty trailing lines
         lines = content.split('\n')
-        # Remove the artificial empty element created if file ends with newline
         if content.endswith('\n') and lines and lines[-1] == '':
             lines.pop()
         return lines
 
-
-def read_docx_file(filepath):
-    """Extracts raw paragraphs from modern .docx OpenXML zip structures."""
-    if not zipfile.is_zipfile(filepath):
-        raise ValueError(f"File {filepath} is not a valid DOCX file.")
+def _read_docx(fp):
+    """Extract paragraphs from .docx."""
+    if not zipfile.is_zipfile(fp):
+        raise ValueError(f"Not valid DOCX: {fp}")
     lines = []
-    try:
-        with zipfile.ZipFile(filepath, 'r') as docx:
-            doc_xml = docx.read('word/document.xml')
-            root = ET.fromstring(doc_xml)
-            for paragraph in root.iter(f"{{{NAMESPACES['w']}}}p"):
-                p_text = [t.text for t in paragraph.iter(f"{{{NAMESPACES['w']}}}t") if t.text]
-                lines.append("".join(p_text))
-    except zipfile.BadZipFile as e:
-        raise ValueError(f"File {filepath} is corrupted or not a valid ZIP archive: {e}")
-    except ET.ParseError as e:
-        raise ValueError(f"Failed to parse XML from {filepath}: {e}")
+    with zipfile.ZipFile(fp, 'r') as z:
+        doc_xml = z.read('word/document.xml')
+        root = ET.fromstring(doc_xml)
+        ns = NAMESPACES['w']
+        for para in root.iter(f"{{{ns}}}p"):
+            texts = [t.text for t in para.iter(f"{{{ns}}}t") if t.text]
+            lines.append("".join(texts))
     return lines
 
-
-def read_odt_file(filepath):
-    """Extracts text paragraphs from LibreOffice .odt zip files."""
-    if not zipfile.is_zipfile(filepath):
-        raise ValueError(f"File {filepath} is not a valid ODT file.")
+def _read_odt(fp):
+    """Extract paragraphs from .odt."""
+    if not zipfile.is_zipfile(fp):
+        raise ValueError(f"Not valid ODT: {fp}")
     lines = []
-    try:
-        with zipfile.ZipFile(filepath, 'r') as odt:
-            content_xml = odt.read('content.xml')
-            root = ET.fromstring(content_xml)
-            for paragraph in root.iter(f"{{{NAMESPACES['text']}}}p"):
-                p_text = "".join(paragraph.itertext())
-                lines.append(p_text)
-    except zipfile.BadZipFile as e:
-        raise ValueError(f"File {filepath} is corrupted or not a valid ZIP archive: {e}")
-    except ET.ParseError as e:
-        raise ValueError(f"Failed to parse XML from {filepath}: {e}")
+    with zipfile.ZipFile(fp, 'r') as z:
+        content_xml = z.read('content.xml')
+        root = ET.fromstring(content_xml)
+        for para in root.iter(f"{{{NAMESPACES['text']}}}p"):
+            lines.append("".join(para.itertext()))
     return lines
-
 
 def extract_document_text(filepath):
-    """Central dispatcher to read text content depending on file extension."""
+    """Route to appropriate parser."""
     ext = os.path.splitext(filepath)[1].lower()
     if ext == '.docx':
-        return read_docx_file(filepath)
+        return _read_docx(filepath)
     elif ext == '.odt':
-        return read_odt_file(filepath)
+        return _read_odt(filepath)
     elif ext in ['.txt', '.md', '.py', '.json', '.html', '.css']:
-        return read_text_file(filepath)
+        return _read_txt(filepath)
     else:
         raise ValueError(f"Unsupported extension: '{ext}'")
