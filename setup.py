@@ -6,7 +6,6 @@ with both old and modern pip/setuptools versions.
 import os
 from setuptools import setup, find_packages
 
-# Safely read README — don't crash if it's missing
 here = os.path.abspath(os.path.dirname(__file__))
 readme_path = os.path.join(here, "README.md")
 try:
@@ -17,7 +16,7 @@ except FileNotFoundError:
 
 setup(
     name="was-cli",
-    version="1.4.0",
+    version="2.0.0",
     description="A document time machine CLI — version control for personal documents and study notes",
     long_description=long_description,
     long_description_content_type="text/markdown",
