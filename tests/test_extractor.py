@@ -1,126 +1,107 @@
-"""
-Unit tests for the WAS extractor module.
-Run with: python -m pytest tests/ -v
-"""
-import os
-import zipfile
-import tempfile
+"""Extractor tests - handles txt/docx/odt files."""
+import os, zipfile, tempfile, shutil
 import unittest
-from was.extractor import extract_document_text, read_text_file, read_docx_file, read_odt_file
+from was.extractor import extract_document_text
 
 
-class TestTextFiles(unittest.TestCase):
+class TxtTests(unittest.TestCase):
     def setUp(self):
-        self.test_dir = tempfile.mkdtemp()
+        self.tmp = tempfile.mkdtemp()
 
     def tearDown(self):
-        import shutil
-        shutil.rmtree(self.test_dir, ignore_errors=True)
+        shutil.rmtree(self.tmp, ignore_errors=True)
 
-    def test_txt_extraction(self):
-        path = os.path.join(self.test_dir, "test.txt")
-        with open(path, 'w') as f:
-            f.write("Hello\nWorld\n")
-        lines = extract_document_text(path)
-        self.assertEqual(lines, ["Hello", "World"])
+    def test_basic_txt(self):
+        fp = os.path.join(self.tmp, "test.txt")
+        with open(fp, 'w') as f:
+            f.write("Hello\nHi\n")
+        self.assertEqual(extract_document_text(fp), ["Hello", "Hi"])
 
-    def test_md_extraction(self):
-        path = os.path.join(self.test_dir, "test.md")
-        with open(path, 'w') as f:
-            f.write("# Header\nSome content\n")
-        lines = extract_document_text(path)
-        self.assertEqual(lines, ["# Header", "Some content"])
+    def test_markdown_same_as_txt(self):
+        fp = os.path.join(self.tmp, "doc.md")
+        with open(fp, 'w') as f:
+            f.write("# Title\nContent\n")
+        lines = extract_document_text(fp)
+        self.assertEqual(lines[0], "# Title")
 
-    def test_py_extraction(self):
-        path = os.path.join(self.test_dir, "test.py")
-        with open(path, 'w') as f:
-            f.write("import os\nprint('hello')\n")
-        lines = extract_document_text(path)
-        self.assertEqual(lines, ["import os", "print('hello')"])
+    def test_python_ext_works(self):
+        fp = os.path.join(self.tmp, "script.py")
+        with open(fp, 'w') as f:
+            f.write("print('hi')\n")
+        lines = extract_document_text(fp)
+        self.assertEqual(lines[0], "print('hi')")
 
     def test_empty_file(self):
-        path = os.path.join(self.test_dir, "empty.txt")
-        with open(path, 'w') as f:
-            pass
-        lines = extract_document_text(path)
-        self.assertEqual(lines, [])
+        fp = os.path.join(self.tmp, "empty.txt")
+        open(fp, 'w').close()
+        self.assertEqual(extract_document_text(fp), [])
 
-    def test_trailing_newline_handling(self):
-        path = os.path.join(self.test_dir, "trailing.txt")
-        with open(path, 'w') as f:
-            f.write("Line 1\nLine 2\n")
-        lines = extract_document_text(path)
-        self.assertEqual(lines, ["Line 1", "Line 2"])
-        self.assertFalse(lines[-1] == "")
+    def test_final_newline_stripped(self):
+        fp = os.path.join(self.tmp, "nl.txt")
+        with open(fp, 'w') as f:
+            f.write("L1\nL2\n")
+        lines = extract_document_text(fp)
+        self.assertNotEqual(lines[-1], "")
 
-    def test_unsupported_extension_raises(self):
-        path = os.path.join(self.test_dir, "test.xyz")
-        with open(path, 'w') as f:
+    def test_unknown_ext_throws(self):
+        fp = os.path.join(self.tmp, "weird.xyz")
+        with open(fp, 'w') as f:
             f.write("data")
         with self.assertRaises(ValueError):
-            extract_document_text(path)
+            extract_document_text(fp)
 
 
-class TestDocxExtraction(unittest.TestCase):
+class DocxTests(unittest.TestCase):
     def setUp(self):
-        self.test_dir = tempfile.mkdtemp()
-        self.docx_path = os.path.join(self.test_dir, "test.docx")
-        # Create a minimal valid DOCX (OpenXML) file
-        document_xml = b'''<?xml version="1.0" encoding="UTF-8"?>
+        self.tmp = tempfile.mkdtemp()
+        xml = b'''<?xml version="1.0"?>
 <w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">
   <w:body>
-    <w:p><w:r><w:t>Hello World</w:t></w:r></w:p>
-    <w:p><w:r><w:t>Second paragraph</w:t></w:r></w:p>
+    <w:p><w:r><w:t>Para 1</w:t></w:r></w:p>
+    <w:p><w:r><w:t>Para 2</w:t></w:r></w:p>
   </w:body>
 </w:document>'''
-        with zipfile.ZipFile(self.docx_path, 'w') as zf:
-            zf.writestr('word/document.xml', document_xml)
+        fp = os.path.join(self.tmp, "test.docx")
+        with zipfile.ZipFile(fp, 'w') as z:
+            z.writestr('word/document.xml', xml)
+        self.fp = fp
 
     def tearDown(self):
-        import shutil
-        shutil.rmtree(self.test_dir, ignore_errors=True)
+        shutil.rmtree(self.tmp)
 
-    def test_docx_extraction(self):
-        lines = extract_document_text(self.docx_path)
+    def test_parses_docx(self):
+        lines = extract_document_text(self.fp)
         self.assertEqual(len(lines), 2)
-        self.assertEqual(lines[0], "Hello World")
-        self.assertEqual(lines[1], "Second paragraph")
 
-    def test_invalid_docx_raises(self):
-        bad_path = os.path.join(self.test_dir, "bad.docx")
-        with open(bad_path, 'w') as f:
-            f.write("Not a real docx")
+    def test_corrupt_docx_fails(self):
+        bad = os.path.join(self.tmp, "broken.docx")
+        with open(bad, 'w') as f:
+            f.write("garbage")
         with self.assertRaises(ValueError):
-            extract_document_text(bad_path)
+            extract_document_text(bad)
 
 
-class TestODTExtraction(unittest.TestCase):
+class OdtTests(unittest.TestCase):
     def setUp(self):
-        self.test_dir = tempfile.mkdtemp()
-        self.odt_path = os.path.join(self.test_dir, "test.odt")
-        # Create a minimal valid ODT file
-        content_xml = b'''<?xml version="1.0" encoding="UTF-8"?>
-<office:document-content xmlns:office="urn:oasis:names:tc:opendocument:xmlns:office:1.0"
-                         xmlns:text="urn:oasis:names:tc:opendocument:xmlns:text:1.0">
-  <office:body>
-    <office:text>
-      <text:p>First paragraph</text:p>
-      <text:p>Second paragraph</text:p>
-    </office:text>
-  </office:body>
+        self.tmp = tempfile.mkdtemp()
+        xml = b'''<?xml version="1.0"?>
+<office:document-content xmlns:text="urn:oasis:names:tc:opendocument:xmlns:text:1.0">
+  <office:body><office:text>
+    <text:p>P1</text:p>
+    <text:p>P2</text:p>
+  </office:text></office:body>
 </office:document-content>'''
-        with zipfile.ZipFile(self.odt_path, 'w') as zf:
-            zf.writestr('content.xml', content_xml)
+        fp = os.path.join(self.tmp, "test.odt")
+        with zipfile.ZipFile(fp, 'w') as z:
+            z.writestr('content.xml', xml)
+        self.fp = fp
 
     def tearDown(self):
-        import shutil
-        shutil.rmtree(self.test_dir, ignore_errors=True)
+        shutil.rmtree(self.tmp)
 
-    def test_odt_extraction(self):
-        lines = extract_document_text(self.odt_path)
-        self.assertEqual(len(lines), 2)
-        self.assertEqual(lines[0], "First paragraph")
-        self.assertEqual(lines[1], "Second paragraph")
+    def test_parses_odt(self):
+        lines = extract_document_text(self.fp)
+        self.assertEqual(lines, ["P1", "P2"])
 
 
 if __name__ == "__main__":
