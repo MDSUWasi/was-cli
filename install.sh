@@ -9,11 +9,10 @@ RED='\033[0;31m'
 BLUE='\033[0;34m'
 NC='\033[0m'
 
-echo "======================================"
-echo " WAS Document Time Machine Installer"
-echo "======================================"
+echo "==============================================="
+echo " WAS Document Time Machine Installer (v2.0.0)"
+echo "==============================================="
 
-# Check for minimum requirements
 if ! command -v python3 &> /dev/null; then
     echo -e "\n${RED}ERROR: Python 3 is required.${NC}"
     echo "Ubuntu/Debian: sudo apt install python3-pip"
@@ -24,14 +23,11 @@ fi
 
 echo -e "${GREEN}✓ Python 3 detected${NC}"
 
-# --- Attempt installation with fallbacks for PEP 668 ---
 echo -e "\n${BLUE}Installing WAS package...${NC}"
 
 INSTALL_FLAGS=""
 
-# Try standard --user install first
 if ! python3 -m pip install $INSTALL_FLAGS . ; then
-    # If that fails, try with --break-system-packages (PEP 668 environments)
     echo -e "${YELLOW}Standard install failed, trying with --break-system-packages...${NC}"
     if python3 -m pip install $INSTALL_FLAGS --break-system-packages . ; then
         :
@@ -50,7 +46,6 @@ if ! python3 -m pip install $INSTALL_FLAGS . ; then
     fi
 fi
 
-# --- Verify installation and auto-fix PATH ---
 USER_BIN="$HOME/.local/bin"
 
 if command -v was &> /dev/null; then
@@ -58,20 +53,16 @@ if command -v was &> /dev/null; then
     echo "Run: ${BLUE}was --help${NC}"
 
 elif [ -x "$USER_BIN/was" ]; then
-    # was is installed but PATH doesn't include ~/.local/bin — auto-fix it
     echo -e "\n${YELLOW}⚠️  'was' is installed but '$USER_BIN' is not in your PATH.${NC}"
 
-    # Detect shell config file
     if [ -n "$ZSH_VERSION" ] || [ "$SHELL" = "/bin/zsh" ]; then
         RC_FILE="$HOME/.zshrc"
     else
         RC_FILE="$HOME/.bashrc"
     fi
 
-    # Auto-add to PATH (with confirmation)
     read -p "Automatically add to PATH? [Y/n] " response
     if [[ ! "$response" =~ ^[Nn] ]]; then
-        # FIX: grep for the expanded $USER_BIN value, not the escaped literal
         if ! grep -q "$USER_BIN" "$RC_FILE"; then
             echo "export PATH=\"$USER_BIN:\$PATH\"" >> "$RC_FILE"
         fi
