@@ -23,14 +23,23 @@ WAS stands for Document Time Machine.It's a time matchine to see the past edits.
 
 ## Features Without The Fluff
 **1. Auto-Save Watch Mode** - Watches your file, auto-saves every 2 seconds when changes happen. **Why It Matters:** Don't have to remember to commit manually.
+
 **2. Full History Log** - Timeline showing every save with timestamps. **Why It Matters:** Remember why you changed that paragraph three months ago.
+
 **3. Instant Rollback** - Restore any old version instantly. **Why It Matters:** Big undo button for your whole workspace.
+
 **4. Colorized Diff View** - Green for additions, red for deletions in terminal. **Why It Matters:** See changes at a glance.
+
 **5. Custom Tagging** - Mark versions like "final-draft" or "exam-ready". **Why It Matters:** Skip remembering weird commit IDs.
+
 **6. Writing Stats** - Shows line growth, active days, etc. **Why It Matters:** Spot your writing habits.
+
 **7. Export Old Versions** - Pull historical versions to a new location. **Why It Matters:** Test things out without touching current file.
+
 **8. Search History** - Search across ALL saved versions. **Why It Matters:** Where did I write about mitochondria again?
+
 **9. Smart Storage** - Can clean up old auto-saves, keep important ones. **Why It Matters:** Save disk space when needed.
+
 **10. Multiple Formats** - Works with .docx, .odt, .txt, .md, .py, .json, .html. **Why It Matters:** Mix and match without needing different tools.
 
 ## Getting It Installed
