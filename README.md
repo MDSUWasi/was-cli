@@ -1,606 +1,310 @@
-# 🕰️ WAS — Your Document Time Machine CLI
-A powerful version control system designed specifically for personal documents and study notes.
-
-![License](https://img.shields.io/badge/license-MIT-blue.svg)
-
-Track • Restore • Analyze your documents with simple terminal commands
-
-## 🎬 Quick Demo Videos
-### 📁 All demos available in the try/ folder
-**Installing was for first time (The demo is done on Linux Device running Debian)**
-
+# WAS — Your Document Time Machine 🕰️
+A simple version control tool built just for personal documents and notes.
+Nothing fancy, nothing complicated.
+Track things • Go back in time • Check what changed with basic terminal
+## Demo Videos
+**You can find all the demo videos in the preview/ folder if you clone the repo.** 
+### First install walkthrough (done on Debian Linux):
 https://github.com/user-attachments/assets/63e26887-9df5-4025-aeb0-1cc87f8d92da
-
-**Checking whether WAS was successfully installed or not**
-
+### Make sure WAS is installed correctly:
 https://github.com/user-attachments/assets/4be5777e-46f1-4717-97b0-0fef6fe56a25
-
-**Basic uses of WAS** 
-
+### Some common uses:
 https://github.com/user-attachments/assets/441581e6-5f9f-4883-b65d-8dc59c89c12b
-
-
-**Uninstalling WAS**
-
+### How to remove it when you're done:
 https://github.com/user-attachments/assets/c1b72e6d-ebde-4f12-aee8-26801a4f924c
 
-**Note:** I have used cd was-cli because was-cli folder is inside my root directory (Or main files). But users may need to add the accurate path according to the path where was-cli was saved
+**Note:** I ran cd was-cli because the folder was in my home directory. You might need to use a different path depending on where you saved it.
+**Note running around:** The ./uninstall.sh removes WAS from your system but leaves the source code in the was-cli folder. Just delete that folder manually if you want to wipe it completely.
 
-**Note:** Uninstalling using "./uninstall.sh" will uninstall it from device but the source code will remain in a folder name "was-cli". To completely remove WAS, just delete the folder (was-cli) after using ./uninstall.sh
+Type '''was --help''' anytime to see all available commands.
 
-## You can easily see all commands for WAS by typing ``` was --help ``` inside the terminal
+## What Actually Is WAS?
+WAS stands for Document Time Machine.It's a time matchine to see the past edits. That is why I took the name **WAS** according to past tense and first 3 word of my nickname. It's a lightweight version control system made specifically for people who write a lot—students, researchers, writers, whoever tracks changes in Word docs, notes. This project is also inspired from Git (Version Control for codes ). WAS does one thing well: save snapshots of your files so you can go back later without losing anything and do not having to save multiple copies of one file.
 
-## 🤔 What is WAS?
-WAS (Document Time Machine) is a lightweight, zero-dependency version control system built exclusively for personal document management. Inspired by Git but simplified for writers, students, researchers, and anyone who needs to track changes in their Word docs, notes, manuscripts, or code files.
-Unlike traditional VCS tools that require learning complex concepts like branches, stashes, and remotes, WAS focuses purely on one job: automatic time-travel for your documents.
-Why Build Another Version Control Tool?
-graph TD
+## Features Without The Fluff
+**1. Auto-Save Watch Mode** - Watches your file, auto-saves every 2 seconds when changes happen. **Why It Matters:** Don't have to remember to commit manually.
+**2. Full History Log** - Timeline showing every save with timestamps. **Why It Matters:** Remember why you changed that paragraph three months ago.
+**3. Instant Rollback** - Restore any old version instantly. **Why It Matters:** Big undo button for your whole workspace.
+**4. Colorized Diff View** - Green for additions, red for deletions in terminal. **Why It Matters:** See changes at a glance.
+**5. Custom Tagging** - Mark versions like "final-draft" or "exam-ready". **Why It Matters:** Skip remembering weird commit IDs.
+**6. Writing Stats** - Shows line growth, active days, etc. **Why It Matters:** Spot your writing habits.
+**7. Export Old Versions** - Pull historical versions to a new location. **Why It Matters:** Test things out without touching current file.
+**8. Search History** - Search across ALL saved versions. **Why It Matters:** Where did I write about mitochondria again?
+**9. Smart Storage** - Can clean up old auto-saves, keep important ones. **Why It Matters:** Save disk space when needed.
+**10. Multiple Formats** - Works with .docx, .odt, .txt, .md, .py, .json, .html. **Why It Matters:** Mix and match without needing different tools.
 
-    
-
-## ✨ Key Features at a Glance
-<table>
-<tr>
-<th width="18%">Feature</th>
-<th>Description</th>
-<th>Why You'll Love It</th>
-</tr>
-<tr>
-<td><strong>🔄 Auto-Save Watch Mode</strong></td>
-<td>Background monitoring detects file modifications and saves snapshots automatically every 2 seconds</td>
-<td>No need to remember manual commits — just edit!</td>
-</tr>
-<tr>
-<td><strong>📜 Full History Log</strong></td>
-<td>Timeline view of all commits with timestamps, messages, and custom tags</td>
-<td>See exactly when and why you made changes months ago</td>
-</tr>
-<tr>
-<td><strong>⏪ Instant Rollback</strong></td>
-<td>Restore any document to a specific historical version with one command</td>
-<td>Mistake undo button for your entire workspace</td>
-</tr>
-<tr>
-<td><strong>🎨 Colorized Diff View</strong></td>
-<td>Green/red highlighting shows additions/deletions directly in terminal</td>
-<td>Visually understand what changed without external tools</td>
-</tr>
-<tr>
-<td><strong>🏷️ Custom Tagging</strong></td>
-<td>Mark important milestones ("exam-prep", "final-draft", "v3-revision")</td>
-<td>Navigate timeline with meaningful names instead of cryptic IDs</td>
-</tr>
-<tr>
-<td><strong>📊 Writing Analytics</strong></td>
-<td>Track line growth, most active days, and document statistics</td>
-<td>Become aware of your writing habits and productivity patterns</td>
-</tr>
-<tr>
-<td><strong>📦 Workspace Export</strong></td>
-<td>Extract historical versions to new locations without affecting current workspace</td>
-<td>Create drafts from old versions without losing modern edits</td>
-</tr>
-<tr>
-<td><strong>🔍 Full-History Search</strong></td>
-<td>Search entire document history for terms/phrases across all snapshots</td>
-<td>"Where did I write that paragraph about mitochondria?"</td>
-</tr>
-<tr>
-<td><strong>💾 Storage Optimization</strong></td>
-<td>Purge automatic background saves to reclaim disk space while keeping key versions</td>
-<td>Balance convenience with storage efficiency</td>
-</tr>
-<tr>
-<td><strong>📄 Multi-Format Support</strong></td>
-<td>.docx, .odt, .txt, .md, .py, .json, .html, .css — plus more coming</td>
-<td>Unified tool for mixed-format workflows</td>
-</tr>
-</table>
-
-## 🛠️ Installation Guide
-
-**⚡ One-Line Install (Recommended)**
-
-Copy and paste into your terminal:
+## Getting It Installed
+**Fastest Way (One Line)**
 ```
 git clone https://github.com/MDSUWasi/was-cli.git && cd was-cli && chmod +x install.sh && ./install.sh
+```
+That's it. Should be working after that.
+If You Want to Do It Manually
+## On Linux (Ubuntu/Debian/Fedora)
 
 
+**Make sure Python 3 is there:**
 ```
+sudo apt update && sudo apt install python3 python3-pip -y  # Debian/Ubuntu
+```
+or use dnf instead of apt for Fedora
 
-## 🖥️ Platform-Specific Instructions
-**Linux (Ubuntu/Debian/Fedora/Mint)**
-### 1. Ensure Python 3 is installed
-```
-sudo apt update && sudo apt install python3 python3-pip -y
-```
-```
-use "apt for debian based destros and "dnf" for fedora based destros
-```
 
-### 2. Clone or download repository
+**Grab the code:**
 ```
 git clone https://github.com/MDSUWasi/was-cli.git
+```
+```
 cd was-cli
 ```
 
-### 3. Run installer script
+**Run the installer:**
 ```
 chmod +x install.sh
+```
+```
 ./install.sh
 ```
 
-### 4. Add to PATH (if not done automatically)
+**Update your PATH (sometimes it happens automatically):**
 ```
-echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.bashrc
+echo 'export PATH="HOME/.local/bin:HOME/.local/bin:PATH"' >> ~/.bashrc
+```
+```
 source ~/.bashrc
 ```
 
-### 5. Verify installation
+**Double-check it worked:**
 ```
 was --help
 ```
 
-**MAC-OS**
+## On macOS
 
-### 1. Install Python via Homebrew (if not already present)
+
+**Install Python via Homebrew if missing:**
 ```
 brew install python3
 ```
 
-### 2. Clone repository
+**Clone and set up:**
 ```
 git clone https://github.com/MDSUWasi/was-cli.git
+```
+```
 cd was-cli
 ```
-
-### 3. Run installer
 ```
 chmod +x install.sh
+```
+```
 ./install.sh
 ```
-### 4. For Zsh users (default on macOS Catalina+)
+
+**Update shell config:**
+**For Zsh (most Macs these days):**
 ```
-echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.zshrc
+echo 'export PATH="HOME/.local/bin:HOME/.local/bin:PATH"' >> ~/.zshrc
+```
+```
 source ~/.zshrc
 ```
-### 5. For Bash users
+**Or bash:**
 ```
-echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.bash_profile
+echo 'export PATH="HOME/.local/bin:HOME/.local/bin:PATH"' >> ~/.bash_profile
+```
+```
 source ~/.bash_profile
 ```
-### 6. Verify
+
+**Verify:**
 ```
 was --help
 ```
 
-**Windows (WSL/Git Bash)**
-
-### Windows doesn't have native support yet. Use WSL2:
-
-### 1. Install WSL2 (PowerShell as Administrator)
-```
-wsl --install -d Ubuntu
-```
-### 2. Follow Linux instructions above inside WSL terminal
-
-### Alternative: Use Git Bash with Python installed
-### Download Python from python.org/downloads
-### Then run pip install was-cli
+## On Windows
+No native Windows support yet honestly. Two options:
 
 
-## ✅ Verifying Installation
-After installation, confirm everything works:
-### Check version
+**WSL2 (recommended):** Install Ubuntu via WSL, follow Linux instructions inside there
+
+```wsl --install -d Ubuntu```  # Run as admin in PowerShell
+
+
+**Git Bash + Python:** Download Python from python.org, then try pip installing it
+
+
+
+## Checking It Works
+**After install, run a couple quick tests:**
 ```
 was --version
 ```
-### Test help command
 ```
 was --help
 ```
-### Try basic initialization in test directory
 ```
 mkdir ~/test_was_repo && cd ~/test_was_repo
 ```
 ```
 was init
 ```
+**Should say:** "Initialized empty 'Was' repository successfully."
 
-**You should see: "Initialized empty 'Was' repository successfully."**
+## First Steps Using WAS
+Takes literally 5 minutes to figure out.
 
-## ❌ Uninstallation
-**Want to remove WAS cleanly?**
-
-### Option 1: Use provided uninstaller
-```
-cd /path/to/was-cli
-chmod +x uninstall.sh
-```
-```
-./uninstall.sh
-```
-
-## 🚀 Quick Start Guide
-
-Learn WAS in under 5 minutes!
-
-### Step 1: Initialize Your First Repository
+**Step 1:** Initialize a Repo
 ```
 cd ~/school_notes
 ```
 ```
 was init
 ```
+**Creates a hidden .was/ folder underneath. Stores everything there.**
 
-Creates a hidden .was/ directory to store all version data:
-```
-~/school_notes/
-├── chemistry_notes.docx
-├── biology_report.txt
-└── .was/                 ← Hidden repository database
-    ├── history.json      ← Commit history metadata
-    └── versions/         ← Stored snapshots per version
-        ├── v1_chemistry_notes.docx
-        └── v2_biology_report.txt
-```
-
-### Step 2: Track Your First File
+**Step 2:** Track Something
 ```
 was save chemistry_notes.docx "Started alkane basics" "Homework Week 1"
 ```
-Output:
-```
+**You'll see output like:**
+
 ✅ Saved base state of 'chemistry_notes.docx' as v1a2b3c4d!
-```
+Base snapshot created. Future saves only trigger if actual changes detected.
 
-This creates a baseline snapshot. Subsequent saves only commit if changes are detected.
-
-### Step 3: Enable Auto-Protection (Foreground)
+**Step 3:** Turn On Auto-Protection
+Keep watching while you edit:
 ```
 was watch chemistry_notes.docx
 ```
-WAS will now monitor the file every 2 seconds and auto-save changes automatically. 
-Press Ctrl+C to stop watching.
-
-Each auto-save appears as:
+WAS monitors every 2 seconds, auto-commits changes. Hit Ctrl+C when done.
+Messages appear like:
+```
 Modification detected at 2026-06-28 14:23:41. Processing change...
 Auto-saved version v5f9e8g7h6 for chemistry_notes.docx!
-
-
-### Step 4: Review Progress Later
-#### Check current status
+```
+**Step 4:** Check What Changed Later
+Status check:
 ```
 was status chemistry_notes.docx
 ```
-Output:
+Shows:
 ```
 🟡 File 'chemistry_notes.docx' is Modified (Unsaved: +12 insertions, -3 deletions).
 ```
-
-## See full timeline
+**View full timeline:**
 ```
 was log chemistry_notes.docx
 ```
-Output:
+Output looks like:
 ```
 === TIMELINE LOG ===
-
 Commit ID: v5f9e8g7h6 [Tags: exam-ready]
 Date:      2026-06-28 14:23:41
 File:      chemistry_notes.docx
 What:      Added mechanism for dehydration reactions
 Why:       Prof mentioned in lecture
 
-----------------------------------------
 Commit ID: v1a2b3c4d
 Date:      2026-06-25 09:15:00
 File:      chemistry_notes.docx
 What:      Started alkane basics
 Why:       Homework Week 1
-----------------------------------------
 ```
-
-### Step 5: Recover Lost Work
-
-Accidentally deleted content? No panic!
-#### See what changed
+**Step 5:** Fix Mistakes
+Deleted stuff by accident? No problem.
+**See recent changes:**
 ```
 was diff chemistry_notes.docx
 ```
-Output (colorized):
-```
-@@ -12,5 +12,8 @@ Alkane Naming Convention
- The parent chain determines the prefix:
-   methane = 1 carbon
-+ethane = 2 carbons
-+propane = 3 carbons
-+buts = 4 carbons
- hexane = 6 carbons
- heptane = 7 carbons
- octane = 8 carbons
- ```
-### Restore to earlier version
+Gets you colorized diff output showing exactly what changed.
+Go back to an older version:
 ```
 was checkout chemistry_notes.docx v1a2b3c4d
 ```
-Done! Your file is back to its earlier state. Current unsaved changes are discarded.
-
-### Step 6: Tag Important Milestones
-Create friendly bookmarks for critical versions:
+Done. File restored. Any unsaved current edits get overwritten though, so be careful.
+**Step 6:** Bookmark Important Versions
+Use tags instead of memorizing commit IDs:
 ```
 was tag chemistry_notes.docx v5f9e8g7h6 "midterm-final"
 ```
-Later, easily restore using the tag name:
+Then restore easily:
 ```
 was checkout chemistry_notes.docx midterm-final
 ```
-## Step 7: Discover Where You Mentioned Something
+**Step 7:** Find Text Across All Versions
+Remember writing something somewhere but forgot where?
 ```
 was search "photosynthesis"
 ```
-Output:
-
+Gives results like:
 ```
 🔍 Found 'photosynthesis' in the following historical backups:
-  * Version: v3c2d1e0f | File: biology_report.txt | Date: 2026-06-20 11:42:00
-    Lines matched: 47, 52, 89
-    Save context: "Added chloroplast diagrams"
+
+Version: v3c2d1e0f | File: biology_report.txt | Date: 2026-06-20 11:42:00
+Lines matched: 47, 52, 89
+Save context: "Added chloroplast diagrams"
 ```
 
-## ⚙️ How It Works Under the Hood
-Understanding the architecture helps you trust your data. WAS is modular and transparent.
-Architecture Overview
-flowchart TB
-    subgraph User["User Layer"]
-        CLI[Cli.py - Terminal Interface]
-    end
-    
-    subgraph Logic["Logic Layer"]
-        Hist[History.py - Database & Commits]
-        Ext[Extractor.py - Format Parsing]
-        Dif[Differ.py - Delta Generation]
-    end
-    
-    subgraph Storage["Storage Layer"]
-        JSON[.was/history.json]
-        SNAPS[.was/versions/*.ext]
-    end
-    
-    CLI --> Hist
-    Hist --> Ext
-    Hist --> Dif
-    Hist --> JSON
-    Hist --> SNAPS
+## Dependencies: 
+Literally zero external packages. Python 3.6+ only, uses standard library modules:
+os, json, time, shutil, subprocess, uuid, fcntl, zipfile, xml.etree, collections.Counter, difflib
+This means it runs almost anywhere without fighting package managers.
 
-## Module-by-Module Breakdown
-### 1. cli.py — The Commander
-
-Handles all user input, argument parsing, and dispatches to appropriate handlers. Maintains colorful, readable terminal output.
-
-***Key responsibilities:***
-
-Parse command arguments (sys.argv)
-Route to handler functions (handle_init, handle_save, etc.)
-Format user-facing output with ANSI colors
-Display help menu when no command given
-
-### 2. history.py — The Core Brain
-All database operations live here. This is where commits are recorded, histories retrieved, and snapshots managed.
-
-**Functions include:**
-
-**init_repository()** — Creates .was/ structure
-**save_commit()** — Saves new snapshots with metadata
-**checkout_file()** — Restores specific versions
-**get_status()** — Detects unsaved changes
-**get_statistics()** — Generates analytics
-**search_history()** — Finds text across all backups
-**purge_history()** — Cleans redundant auto-saves
-```
-Data model:
-{
-  "repository_info": {
-    "created_at": 1719504000,
-    "version": "1.4.0"
-  },
-  "commits": [
-    {
-      "id": "v1a2b3c4d",
-      "timestamp": 1719504900,
-      "filepath": "chemistry_notes.docx",
-      "message": "Started alkane basics",
-      "reason": "Homework Week 1",
-      "snapshot_file": "v1a2b3c4d_chemistry_notes.docx",
-      "is_baseline": true,
-      "delta": []
-    }
-  ],
-  "tracked_files": {
-    "chemistry_notes.docx": {
-      "current_version": "v1a2b3c4d"
-    }
-  },
-  "tags": {
-    "midterm-final": {
-      "filepath": "chemistry_notes.docx",
-      "version_id": "v5f9e8g7h6"
-    }
-  }
-}
-```
-### 3. extractor.py — The Decoder
-Universal text extraction for multiple document formats. Each extension gets dedicated parser.
-
-**Supported formats:**
-
-DOCX → OpenXML ZIP structure → XML paragraph nodes → concatenated text
-ODT → ODF ZIP structure → XML text elements → extracted paragraphs
-.txt, .md, .py, etc. → UTF-8 raw lines
-
-Uses only standard library (zipfile, xml.etree.ElementTree).
-
-### 4. differ.py — The Comparator
-Generates unified diffs between two file states using Python's difflib. Outputs both human-readable colorized diffs and numerical summaries.
-
-**Produces:**
-
-Insertion count (+lines added)
-Deletion count (-lines removed)
-Colored terminal output (green/additions, red/deletions, cyan/context)
-
-### 5. patcher.py — Future Ready (Currently Unused)
-Contains apply_delta() for applying patches during checkout. Not wired in because WAS prioritizes safety through full snapshots over delta-only storage. Designed for future optimization where you might switch to delta-based storage.
-### 6. Security Helpers (Embedded throughout)
-
-Path validation — Prevents escaping workspace via symlinks or ../ attacks
-Atomic writes — Temp file + shutil.move prevents corruption on crash
-File locking — fcntl.flock() handles concurrent access gracefully
-String sanitization — Trims length, removes control characters before database storage
-
-
-Snapshot Strategy Explained
-sequenceDiagram
-    participant U as User
-    participant W as WAS Watch Mode
-    participant S as Snapshot Store
-    participant DB as Database JSON
-    
-    U->>W: Edit document continuously
-    alt File modified every 2 sec
-        W->>S: Copy complete file snapshot
-        S->>DB: Record commit entry with ID
-        DB-->>U: Notification: "Auto-saved!"
-    else No change detected
-        W-->>W: Skip saving (no-op)
-    end
-## Why full snapshots?
-
-Simpler and less error-prone than deltas
-Guaranteed recoverability even if patch algorithm has bugs
-Easy to audit/debug (open .was/versions/vXXX_filename.ext)
-Modern SSDs + compression make storage cost negligible
-
-
-**📦 Dependencies (None!)
-That's right — WAS requires only Python's standard library**.
-## Internal requirements verified at runtime:
-python_requires = ">=3.6"
-
-## Standard libraries used internally:
-```
-import os           # Path manipulation, file existence checks
-import json         # Database serialization
-import time         # Timestamp generation
-import shutil       # Atomic file moves, copies
-import subprocess   # System notifications via notify-send
-import uuid         # Unique version identifiers
-import fcntl        # File locking for concurrency
-import zipfile      # DOCX/ODT ZIP unpacking
-import xml.etree    # Document XML parsing
-from collections import Counter  # Statistics aggregation
-from difflib import unified_diff  # Change detection
-```
-
-### External dependencies: ZERO
-### This ensures maximum compatibility ### across distros and minimal probematic surface
-
-**📂 Directory Structure After Install**
-```
-project_folder/
-│
-├── install.sh              # Main installer script (auto-fixes PATH)
-├── uninstall.sh            # Safe removal script
-├── pyproject.toml          # Modern build backend specification
-├── setup.py                # Legacy setuptools compatibility
-├── LICENSE                 # MIT License text
-├── README.md               # This file!
-│
-└── was/                    # Main package directory
-    ├── __init__.py         # Package metadata (__version__)
-    ├── __main__.py         # Entry point: python -m was
-    ├── cli.py              # User interface & command routing
-    ├── history.py          # Repository logic, database ops
-    ├── extractor.py        # Multi-format document parsers
-    ├── differ.py           # Delta generation & visualization
-    ├── patcher.py          # Future delta application module
-    └── try/                # 🎬 Demo videos folder (see below)
-        ├── install_demo.mp4
-        ├── usage_walkthrough.mp4
-        └── uninstall_demo.mp4
-```
-
-## 💼 Real-World Workflows
-
-**Scenario 1:** Academic Paper Drafting
-You're writing a thesis with multiple co-authors.
+**Typical Use Cases**
+1. Writing Academic Papers
+2. Working on thesis with co-authors:
 ```
 cd ~/thesis_drafts/paper_v1
 ```
 ```
 was init
 ```
-
-## Initial version sent to committee
 ```
 was save paper.docx "Initial submission draft" "Sent to advisors June 15"
 ```
-
-## Enable protection during revisions
 ```
-was watch paper.docx
+was watch paper.docx  # Running while editing
 ```
-## While editing in LaTeX, WAS captures every change automatically
-
-## Before resubmission, compare against initial
-``
-was diff paper.docx
-``
-## Tag final approved version
+```
+was diff paper.docx   # Compare against starting point before resubmitting
+```
 ```
 was tag paper.docx v28f4a1b2c "committee-approved"
 ```
-## Export pre-review version for lab archives
 ```
 was export paper.docx committee-approved ../archives/pre_review.docx
 ```
-** Scenario 2:** Student Study Notes
-Taking notes for finals week.
-``
+**Student Notes During Finals**
+Studying for exams:
+```
 cd ~/study_materials/histology
 ```
 ```
 was init
 ```
-
-## Note-taking begins
 ```
 was save organ_systems.odt "Created cardiovascular overview" "Chapter 3 prep"
-``
-
-## Daily studying triggers autosaves
-
 ```
-was watch organ_systems.odt
 ```
-Leave running all study session
-
-## Night review: what got updated today?
+was watch organ_systems.odt  # Leave running through study session
 ```
-was stats organ_systems.odt
 ```
-Output:
+was stats organ_systems.odt   # Review daily progress
+```
+Stats output example:
 ```
 📊 STUDY ANALYTICS FOR organic_chemistry.odt
-  * Total Versions Stacked:  23
-  * High Activity Day:       Wednesday (8 saves)
-  * Baseline Line Count:     420 lines
-  * Current Line Count:      891 lines
-  * Document Line Growth:    +112%
+
+Total Versions Stacked:  23
+High Activity Day:       Wednesday (8 saves)
+Baseline Line Count:     420 lines
+Current Line Count:      891 lines
+Document Line Growth:    +112%
 ```
 
-**Scenario 3:** Creative Writing Backups
-Protecting manuscript progress during editing sessions.
+**Protecting Novel Manuscripts**
+**Editing creative writing:**
 ```
 cd ~/novel_manuscripts/chapter7
 ```
@@ -613,40 +317,20 @@ was save chapter7_final.docx "Opened for heavy revision" "Editing marathon"
 ```
 was watch chapter7_final.docx
 ```
-
-## Oops, accidentally deleted 5 pages! Undo immediately:
+Oops deleted 5 pages?
 ```
 was rollback chapter7_final.docx
 ```
-## Or recover yesterday's version
 ```
 was checkout chapter7_final.docx yesterdraft
 ```
-## Find that brilliant metaphor you wrote weeks ago
 ```
 was search "metaphorical silence echoes louder than noise"
 ```
 
-**Scenario 4:** Software Documentation Updates
-Maintaining technical docs alongside code.
-```
-cd ~/repo/docs/api_reference
-```
-```
-was init
-```
-## Each significant documentation update gets tagged
-```
-was save auth_api.md "Updated OAuth flow examples" "PR #247 merged"
-was tag auth_api.md v3d2e1f0 "api-v2-release"
-```
-## Compare documentation evolution over month
-```
-was log auth_api.md
-```
-## 🔐 Best Practices for Maximum Security
-For production environments, consider adding encryption yourself:
-### Encrypt the repository after init
+## Security Best Practices (Production Environments)
+WAS doesn't encrypt by default. If you want encryption yourself:
+**Backup and encrypt:**
 ```
 cp -r .was .was.backup
 ```
@@ -656,103 +340,33 @@ rm -rf .was
 ```
 gpg -c .was.backup && rm .was.backup
 ```
-### Decrypt when needed
+```
+Decrypt when needed:
+```
 ```
 gpg -d .was.backup.gpg > .was.temp && mv .was.temp .was
 ```
+Simple workaround until proper encryption gets added.
 
-**Interested in contributing? Fork and PR anytime!**
+## Contributing
+Happy to accept contributions
 
-## 🤝 Contributing
-
-WAS thrives on community collaboration!
-
-#### Clone repository
-```
-git clone https://github.com/MDSUWasi/WAS.git
-```
-```
-cd WAS-Doc-TimeMachine
-```
-
-### Create development virtualenv
-```
-python3 -m venv dev_env
-```
-```
-source dev_env/bin/activate
-```
-### Install in editable mode
-```
-pip install -e .
-```
-
-### Make changes
-```
-vim was/cli.py
-```
-### Test locally
-```
-was --help
-```
-```
-was init
-```
-## ... run experiments ...
-
-### Submit pull request!
-
-git add .
-
-git commit -m "feat: improved X 
-
-behavior for Y scenario"
-
-git push origin main
-### Create PR on GitHub UI
-Coding Standards
-
-## 📄 License
-MIT License — Free forever.
+## License
+MIT License. Free forever basically.
 Copyright (c) 2026 Md. Shafi Un Wasi
+Standard MIT terms apply—you can do pretty much whatever. See LICENSE file for full text. **But use at your own risk.**
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
-
-Full license text: LICENSE
-
-## 👥 Credits
-Built by ME ❤️ for students, writers, researchers, and everyone else who deserves reliable document history.
-Inspired by Git but stripped down for personal workflows where simplicity beats power features.
-
+## Credits
+1. Made by me for students, writers, Researchers, really anyone who wishes their documents had better memory.
+2. Git-inspired but simplified heavily. Power users can stick with Git; this is for folks who value simplicity over feature bloat.
+```
 "Your words deserve a time machine."
+```
 
+## Need Help?
+Read this file thoroughly first 😄
+**Issues or discussions:** GitHub Issues / Discussions tab on the repo
+P.S. Made this thing because I hated losing work constantly. Hope it helps someone else deal less headaches.
 
-## 📞 Get Help
-Documentation: Read this README thoroughly
-
-Issues: GitHub Issues
-
-Discussions: GitHub Discussions
-
-
-<div align="center">
-🌈 Made with passion for better digital memory management
-Stargazers ❤️  Stars
-Forks Forks
-</div>
+Built with actual effort for better digital memory
+Stargazers ❤️  Stars Forks Forks
