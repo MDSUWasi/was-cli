@@ -12,7 +12,6 @@ echo "======================================"
 echo " WAS Uninstaller"
 echo "======================================"
 
-# --- Uninstall pip package ---
 echo "Uninstalling WAS package..."
 
 if ! python3 -m pip uninstall was-cli -y 2>/dev/null; then
@@ -26,8 +25,6 @@ fi
 
 echo -e "${GREEN}✓ Package removed${NC}"
 
-# --- Remove PATH entry ---
-# Detect shell config file
 if [ -n "$ZSH_VERSION" ] || [ "$SHELL" = "/bin/zsh" ]; then
     RC_FILE="$HOME/.zshrc"
 else
@@ -37,8 +34,6 @@ fi
 if [ -f "$RC_FILE" ] && grep -q '.local/bin' "$RC_FILE"; then
     read -p "Remove WAS PATH entry from $RC_FILE? [Y/n] " response
     if [[ ! "$response" =~ ^[Nn] ]]; then
-        # FIX: Only remove lines that export PATH with .local/bin,
-        # not every line that happens to mention .local/bin
         sed -i '/export PATH=.*\.local\/bin/d' "$RC_FILE"
         echo -e "${GREEN}✓ PATH entry removed from $RC_FILE${NC}"
         echo -e "${YELLOW}Restart your terminal or run: source $RC_FILE${NC}"
